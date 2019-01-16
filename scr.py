@@ -18,6 +18,7 @@ for ho in hotel:
 	price = ho.find('strong', {'class': 'availprice'})
 	url = ho.find('a', {'class': 'hotel_name_link'})['href']
 	rating = ho.find('div', {'class': 'bui-review-score__badge'})
+	print(price)
 	if(price):
 		pr = price.text
 	else:
