@@ -14,6 +14,7 @@ hotel = parsed_html.find_all('div', {'class': 'sr_item'})
 hotels = []
 print(len(hotel));
 for ho in hotel:
+	print(ho)
 	name = ho.find('span', {'class': 'sr-hotel__name'})
 	price = ho.find('strong', {'class': 'availprice'})
 	url = ho.find('a', {'class': 'hotel_name_link'})['href']
