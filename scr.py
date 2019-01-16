@@ -7,7 +7,7 @@ url = 'https://www.booking.com/searchresults.ja.html?aid=304142&label=gen173nr-1
 r = requests.get(url, headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
 time.sleep(5)
 html = r.content
-parsed_html = BeautifulSoup(html,'html.parser')
+parsed_html = BeautifulSoup(html,'lxml')
 hotel = parsed_html.find_all('div', {'class': 'sr_item'})
 hotels = []
 print(len(hotel));
