@@ -5,6 +5,7 @@ from file_writer import FileWriter
 from datetime import date, timedelta
 from flask import Flask,jsonify
 from flask import request as rq
+import time as tm
 app = Flask(__name__)
 @app.route("/",methods=['GET', 'POST'])
 def main():
@@ -39,7 +40,7 @@ def main():
 		html = r.content
 		parsed_html = BeautifulSoup(html, 'lxml')
 		hotel = parsed_html.find_all('div', {'class': 'sr_item'})
-		time.sleep(5)
+		tm.sleep(5)
 		print(len(hotel));
 		for ho in hotel:
 			#print(ho)
@@ -50,7 +51,7 @@ def main():
 			#print(price)
 			sub_r = requests.get('http://booking.com'+hurl.replace('\n',''),headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
 			sub_html = sub_r.content
-			time.sleep(5)
+			tm.sleep(5)
 			parsed_sub_html = BeautifulSoup(sub_html,'lxml')
 			sub_hotels = parsed_sub_html.find('select',{'class':'hprt-nos-select'})
 			if(sub_hotels):
@@ -60,6 +61,9 @@ def main():
 					occupancy = opt.text
 					occupancy = occupancy.replace('\n','')
 					occupancy = occupancy.split('(',1)[0]
+					occupancy = occupancy.replace(' ','')
+					occupancy = int(occupancy)
+					occupancy = occupancy * 10
 				else:
 					occupancy = 0
 			if(price):
@@ -81,7 +85,7 @@ def main():
 			data['rating'] = rate.replace('\n','')
 			data['occupancy'] = occupancy
 			hotels.append(data)
-			time.sleep(5)
+			tm.sleep(5)
 	writer = FileWriter(hotels, out_format='JSON', country='JAPAN')
 	file = writer.output_file()
 	return jsonify(hotels)
