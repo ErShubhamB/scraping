@@ -64,6 +64,7 @@ def main():
 					occupancy = occupancy.replace(' ','')
 					occupancy = int(occupancy)
 					occupancy = occupancy * 10
+					occupancy = occupancy+' %'
 				else:
 					occupancy = 0
 			if(price):
