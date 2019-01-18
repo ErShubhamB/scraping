@@ -2,43 +2,88 @@ import urllib.request as urllib2
 from bs4 import BeautifulSoup
 import requests
 from file_writer import FileWriter
+from datetime import date, timedelta
+from flask import Flask,jsonify
+from flask import request as rq
+app = Flask(__name__)
+@app.route("/",methods=['GET', 'POST'])
+def main():
+	url = rq.args.get('url')
+	checkin = rq.args.get('checkin')
+	checkout = rq.args.get('checkout') 
+	part_url = url.split('&checkin_year',1)[0]
+	part_url = part_url+'&checkin_year=2019&checkin_month=4&checkin_monthday=12&checkout_year=2019&checkout_month=4&checkout_monthday=13'
+	checkin = checkin.split('-',2)
+	checkout = checkout.split('-',2)
+	d1 = date(int(checkin[0]), int(checkin[1]), int(checkin[2]))  # start date
+	d2 = date(int(checkout[0]), int(checkout[1]), int(checkout[2]))  # start date
+	#d2 = date(2019, 1, 20)  # end date
+	delta = d2 - d1
+	hotels = []
+	for i in range(delta.days):
+		dt_from = d1 + timedelta(i)
+		dt_to = d1 + timedelta(i+1)
+		#[0] => Year [1] => month [2] => day
+		split_from = str(dt_from).split('-',2)
+		split_to = str(dt_to).split('-',2)
+		dt_to_year = split_to[0]
+		dt_to_month = split_to[1]
+		dt_to_day = split_to[2]
 
-url = 'https://www.booking.com/searchresults.ja.html?aid=304142&label=gen173nr-1FCAEoggI46AdIM1gEaHWIAQGYARW4AQfIAQzYAQHoAQH4AQuIAgGoAgM&lang=ja&sid=21963b21255262a85368955819125d52&sb=1&src=searchresults&src_elem=sb&error_url=https%3A%2F%2Fwww.booking.com%2Fsearchresults.ja.html%3Faid%3D304142%3Blabel%3Dgen173nr-1FCAEoggI46AdIM1gEaHWIAQGYARW4AQfIAQzYAQHoAQH4AQuIAgGoAgM%3Bsid%3D21963b21255262a85368955819125d52%3Btmpl%3Dsearchresults%3Bcheckin_month%3D4%3Bcheckin_monthday%3D11%3Bcheckin_year%3D2019%3Bcheckout_month%3D4%3Bcheckout_monthday%3D13%3Bcheckout_year%3D2019%3Bclass_interval%3D1%3Bdest_id%3D-246227%3Bdest_type%3Dcity%3Bfrom_sf%3D1%3Bgroup_adults%3D1%3Bgroup_children%3D0%3Blabel_click%3Dundef%3Bno_rooms%3D1%3Boffset%3D0%3Braw_dest_type%3Dcity%3Broom1%3DA%3Bsb_price_type%3Dtotal%3Bshw_aparth%3D1%3Bslp_r_match%3D0%3Bss_all%3D0%3Bssb%3Dempty%3Bsshis%3D0%26%3B&ss=%E6%9D%B1%E4%BA%AC&is_ski_area=0&ssne=%E6%9D%B1%E4%BA%AC&ssne_untouched=%E6%9D%B1%E4%BA%AC&city=-246227&checkin_year=2019&checkin_month=4&checkin_monthday=11&checkout_year=2019&checkout_month=4&checkout_monthday=12&group_adults=1&group_children=0&no_rooms=1&sb_travel_purpose=business&from_sf=1'
-r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
-html = r.content
-parsed_html = BeautifulSoup(html, 'lxml')
-hotel = parsed_html.find_all('div', {'class': 'sr_item'})
-hotels = []
-print(len(hotel));
-for ho in hotel:
-	#print(ho)
-	name = ho.find('span', {'class': 'sr-hotel__name'})
-	price = ho.find('strong', {'class': 'availprice'})
-	hurl = ho.find('a', {'class': 'hotel_name_link'})['href']
-	rating = ho.find('div', {'class': 'bui-review-score__badge'})
-	#print(price)
-	sub_r = requests.get('http://booking.com'+hurl.replace('\n',''),headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
-	sub_html = sub_r.content
-	parsed_sub_html = BeautifulSoup(sub_html,'lxml')
-	sub_hotels = parsed_sub_html.find('select',{'class':'hprt-nos-select'})
-	if(sub_hotels):
-		opt = sub_hotels('option')[-1]
-		if(opt):
-			#print(opt.text)
-			occupancy = opt.text
-			occupancy = occupancy.replace('\n','')
-			occupancy = occupancy.split('(',1)[0]
-		else:
-			occupancy = 0
-	if(price):
-		pr = price.text
-	else:
-		pr = ''
-	if(rating):
-		rate = rating.text
-	else:
-		rate = ''
-	hotels.append('{name:'+name.text.replace('\n','')+', price: '+pr.replace('\n','')+', URL: http://booking.com'+hurl.replace('\n','')+', rating: '+rate.replace('\n','')+',occupancy: '+occupancy+'}')
-writer = FileWriter(hotels, out_format='JSON', country='JAPAN')
-file = writer.output_file()
-print(file)
+		dt_from_year = split_from[0]
+		dt_from_month = split_from[1]
+		dt_from_day = split_from[2]
+		turl = part_url+'&checkout_month='+dt_to_month+'&checkout_monthday='+dt_to_day+'&no_rooms=1&group_adults=2&group_children=0&sb_travel_purpose=business&b_h4u_keep_filters=&from_sf=1'
+		#print(url)
+		r = requests.get(turl, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
+		html = r.content
+		parsed_html = BeautifulSoup(html, 'lxml')
+		hotel = parsed_html.find_all('div', {'class': 'sr_item'})
+		time.sleep(5)
+		print(len(hotel));
+		for ho in hotel:
+			#print(ho)
+			name = ho.find('span', {'class': 'sr-hotel__name'})
+			price = ho.find('strong', {'class': 'availprice'})
+			hurl = ho.find('a', {'class': 'hotel_name_link'})['href']
+			rating = ho.find('div', {'class': 'bui-review-score__badge'})
+			#print(price)
+			sub_r = requests.get('http://booking.com'+hurl.replace('\n',''),headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
+			sub_html = sub_r.content
+			time.sleep(5)
+			parsed_sub_html = BeautifulSoup(sub_html,'lxml')
+			sub_hotels = parsed_sub_html.find('select',{'class':'hprt-nos-select'})
+			if(sub_hotels):
+				opt = sub_hotels('option')[-1]
+				if(opt):
+					#print(opt.text)
+					occupancy = opt.text
+					occupancy = occupancy.replace('\n','')
+					occupancy = occupancy.split('(',1)[0]
+				else:
+					occupancy = 0
+			if(price):
+				pr = price.text
+			else:
+				pr = ''
+			if(rating):
+				rate = rating.text
+			else:
+				rate = ''
+			data = {}
+			data['check_in_date'] = dt_from_year+'-'+dt_from_month+'-'+dt_from_day
+			data['check_out_date'] = dt_to_year+'-'+dt_to_month+'-'+dt_to_day
+			data['name'] = name.text.replace('\n','')
+			data['price'] = pr.replace('\n','')
+			data['URL'] = 'http://booking.com'+hurl.replace('\n','')
+			rt = rate.replace('\n','')
+			rt = rt.replace(' ','')
+			data['rating'] = rate.replace('\n','')
+			data['occupancy'] = occupancy
+			hotels.append(data)
+			time.sleep(5)
+	writer = FileWriter(hotels, out_format='JSON', country='JAPAN')
+	file = writer.output_file()
+	return jsonify(hotels)
+if __name__ == "__main__":
+    app.run()
